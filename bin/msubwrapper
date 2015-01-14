@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+
+defaults=( -V -j oe -l nodes=1:ppn=1 -l walltime=72:00:00 -l pmem=4000mb -S /bin/bash )
+defaults_mail=( -m abe )
+
+args=( "$@" )
+nargs=${#args[@]}
+
+add_defaults_mail=1
+
+i=0
+
+OPTIND=1
+
+while getopts "a:A:c:C:d:e:EFhIj:k:Kl:m:M:N:o:p:q:r:S:t:u:v:VW:Xz" opt; do
+  case "$opt" in
+    m)
+      add_defaults_mail=0
+      ;;
+  esac
+done
+
+if (( add_defaults_mail )); then
+  defaults+=( "${defaults_mail[@]}" )
+fi
+
+moabparams=( "${defaults[@]}" "${args[@]:0:OPTIND-1}" )
+
+# strip off "--"
+n=${#moabparams[@]}
+if [[ ${moabparams[n-1]} == -- ]]; then
+  moabparams=( "${moabparams[@]:0:n-1}" )
+fi
+
+commands=( "${args[@]:OPTIND-1}" )
+
+
+tempfile=$(mktemp)
+
+printf '%s\n' '#!/bin/bash' > "$tempfile"
+printf '%s\n' '#MSUB -o log_$(JOBNAME).log' >> "$tempfile"
+printf '%q ' "${commands[@]}" >> "$tempfile"
+printf '\n' >> "$tempfile"
+
+exec msub "${moabparams[@]}" "$tempfile"
