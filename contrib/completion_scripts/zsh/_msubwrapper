@@ -1,0 +1,28 @@
+#compdef msubwrapper
+
+local curcontext=$curcontext state ret=1 i
+
+
+typeset -a msub_args
+
+for i in {a,A,c,C,d,e,j,k,l,m,M,N,o,p,q,r,S,t,u,v,W,z}; do
+  msub_args+=('*'-$i'['$i']:'$i': ')
+done
+
+for i in {E,F,h,I,V,X,K}; do
+  msub_args+=('*'-$i'['$i']')
+done
+
+_arguments -C \
+  $msub_args \
+  '*:: :->command' && ret=0
+
+case $state in
+  (command)
+    if [[ $words[1] != -* ]]; then
+      _normal && ret=0
+    fi
+    ;;
+esac
+
+return ret
